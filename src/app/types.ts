@@ -1,17 +1,29 @@
+export interface UserResponseDTO {
+  id: number;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  bio: string;
+  profileImageUrl: string;
+  socialMediaLinks: Record<string, string>;
+}
+
+export interface CategoryDTO {
+  id: number;
+  name: string;
+  description: string;
+}
+
 export interface Post {
   id: number;
-  slug: string;
   title: string;
-  description: string;
-  author: number;
-}
-export interface MockPost {
-  id: number;
-  created_at: string;
-  updated_at: string;
   slug: string;
-  title: string;
   content: string;
-  author: string;
-  user_id: number;
+  imageUrls: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  author: UserResponseDTO;
+  categories: CategoryDTO[];
+  tags: string[];
 }
