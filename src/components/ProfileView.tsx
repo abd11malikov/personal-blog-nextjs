@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { UserResponseDTO, Post } from "@/app/types";
-import UserProfileHeader from "@/app/components/UserProfileHeader";
+import { UserResponseDTO, PostResponseDTO } from "@/app/types";
+import UserProfileHeader from "@/components/UserProfileHeader";
 import PostCard from "@/components/PostCard";
 
 interface ProfileViewProps {
   user: UserResponseDTO;
-  posts: Post[];
+  posts: PostResponseDTO[];
   isDashboard?: boolean;
 }
 
@@ -84,7 +84,7 @@ export default function ProfileView({
                 {isDashboard && (
                   <div className="absolute right-2 top-2 lg:right-auto lg:-left-12 lg:top-2 flex flex-col space-y-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
                     <Link
-                      href={`/admin/edit/${post.id}`}
+                      href={`/admin/edit/${post.slug}`}
                       className="p-2.5 bg-white/90 backdrop-blur-md lg:bg-white text-gray-500 hover:text-blue-600 rounded-full border border-gray-200 shadow-lg lg:shadow-sm transition-all"
                       title="Edit Post"
                     >
@@ -109,7 +109,8 @@ export default function ProfileView({
                   href={`/post/${post.slug}`}
                   className="block transition-transform duration-300 group-hover:-translate-y-1"
                 >
-                  <PostCard post={post} />
+                  {/* Passing user as author to PostCard to provide author info missing in PostResponseDTO */}
+                  <PostCard post={post} author={user} />
                 </Link>
                 <div className="mt-8 border-b border-gray-50"></div>
               </div>

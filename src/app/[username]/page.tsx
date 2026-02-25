@@ -5,12 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import ProfileView from "@/components/ProfileView";
-import { Post, UserResponseDTO } from "../types";
-
-interface ApiPost extends Omit<Post, "createdAt" | "updatedAt"> {
-  createdAt: string;
-  updatedAt: string;
-}
+import { PostResponseDTO, UserResponseDTO } from "../types";
 
 export default function UserProfile() {
   const params = useParams();
@@ -20,7 +15,7 @@ export default function UserProfile() {
     : params.username;
 
   const [user, setUser] = useState<UserResponseDTO | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostResponseDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +25,7 @@ export default function UserProfile() {
       try {
         setLoading(true);
 
-        // 1. Fetch User Details
+        // Fetch User Details - now includes posts for efficiency
         const userResponse = await fetch(
           `http://localhost:8080/api/users/${encodeURIComponent(username)}`,
           {
@@ -43,38 +38,13 @@ export default function UserProfile() {
         );
 
         if (userResponse.ok) {
-          const userData = await userResponse.json();
+          const userData: UserResponseDTO = await userResponse.json();
           setUser(userData);
-        }
-
-        // 2. Fetch All Posts and Filter
-        const postsResponse = await fetch("http://localhost:8080/api/posts");
-        if (postsResponse.ok) {
-          const data = await postsResponse.json();
-          const userPosts = data
-            .filter((item: ApiPost) => item.author.username === username)
-            .map((item: ApiPost) => ({
-              id: item.id,
-              slug: item.slug,
-              title: item.title,
-              content: item.content,
-              author: {
-                id: item.author.id,
-                firstName: item.author.firstName || "",
-                lastName: item.author.lastName || "",
-                email: item.author.email || "",
-                profileImageUrl: item.author.profileImageUrl || "",
-                bio: item.author.bio || "",
-                username: item.author.username || "",
-                socialMediaLinks: item.author.socialMediaLinks || {},
-              },
-              imageUrls: item.imageUrls || [],
-              categories: item.categories || [],
-              tags: item.tags || [],
-              createdAt: new Date(item.createdAt),
-              updatedAt: new Date(item.updatedAt),
-            }));
-          setPosts(userPosts);
+          // PostResponseDTO now has authorId, and posts are directly part of user
+          setPosts(userData.posts || []);
+        } else {
+          setUser(null);
+          setPosts([]);
         }
       } catch (error) {
         console.error("Error fetching profile data:", error);
@@ -124,7 +94,7 @@ export default function UserProfile() {
           <p className="text-gray-500 text-lg font-light mb-10 leading-relaxed">
             The profile for{" "}
             <span className="font-semibold text-gray-900">@{username}</span>{" "}
-            doesn't seem to exist or may have been removed.
+            doesn&apos;t seem to exist or may have been removed.
           </p>
           <Link
             href="/"

@@ -4,12 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import ProfileView from "@/components/ProfileView";
-import { Post, UserResponseDTO } from "./types";
-
-interface ApiPost extends Omit<Post, "createdAt" | "updatedAt"> {
-  createdAt: string;
-  updatedAt: string;
-}
+import { PostResponseDTO, UserResponseDTO } from "./types";
 
 export default function Home() {
   const { username, token } = useAuth();
@@ -17,7 +12,7 @@ export default function Home() {
 
   // Dashboard state
   const [user, setUser] = useState<UserResponseDTO | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostResponseDTO[]>([]);
   const [loadingDashboard, setLoadingDashboard] = useState(false);
 
   useEffect(() => {
@@ -31,7 +26,7 @@ export default function Home() {
       try {
         setLoadingDashboard(true);
 
-        // 1. Fetch User Details
+        // Fetch User Details which now includes posts for efficiency
         const userResponse = await fetch(
           `http://localhost:8080/api/users/${username}`,
           {
@@ -40,39 +35,13 @@ export default function Home() {
             },
           },
         );
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUser(userData);
-        }
 
-        // 2. Fetch All Posts and Filter (assuming no user-posts endpoint)
-        const postsResponse = await fetch("http://localhost:8080/api/posts");
-        if (postsResponse.ok) {
-          const data = await postsResponse.json();
-          const userPosts = data
-            .filter((item: ApiPost) => item.author.username === username)
-            .map((item: ApiPost) => ({
-              id: item.id,
-              slug: item.slug,
-              title: item.title,
-              content: item.content,
-              author: {
-                id: item.author.id,
-                firstName: item.author.firstName || "",
-                lastName: item.author.lastName || "",
-                email: item.author.email || "",
-                profileImageUrl: item.author.profileImageUrl || "",
-                bio: item.author.bio || "",
-                username: item.author.username || "",
-                socialMediaLinks: item.author.socialMediaLinks || {},
-              },
-              imageUrls: item.imageUrls || [],
-              categories: item.categories || [],
-              tags: item.tags || [],
-              createdAt: new Date(item.createdAt),
-              updatedAt: new Date(item.updatedAt),
-            }));
-          setPosts(userPosts);
+        if (userResponse.ok) {
+          const userData: UserResponseDTO = await userResponse.json();
+          setUser(userData);
+          // PostResponseDTO now has authorId, but ProfileView might expect author object
+          // depending on how components are updated. For now, we use the posts from the user.
+          setPosts(userData.posts || []);
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -84,13 +53,12 @@ export default function Home() {
     if (mounted && username) {
       fetchDashboardData();
     }
-  }, [username, mounted]);
+  }, [username, mounted, token]);
 
   if (!mounted) {
-    return null; // Or a minimal loader
+    return null;
   }
 
-  // --- LOGGED IN VIEW: DASHBOARD ---
   if (username) {
     return (
       <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
@@ -205,6 +173,12 @@ export default function Home() {
           Learn more about my journey &rarr;
         </Link>
       </section>
+      <footer className="py-12 border-t border-gray-100 text-center">
+        <p className="text-sm text-gray-400 font-serif">
+          © {new Date().getFullYear()} Web Notes. Built with Next.js & Spring
+          Boot.
+        </p>
+      </footer>
     </div>
   );
 }

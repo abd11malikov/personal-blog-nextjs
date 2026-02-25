@@ -7,6 +7,7 @@ export interface UserResponseDTO {
   bio: string;
   profileImageUrl: string;
   socialMediaLinks: Record<string, string>;
+  posts: PostResponseDTO[];
 }
 
 export interface CategoryDTO {
@@ -15,15 +16,15 @@ export interface CategoryDTO {
   description: string;
 }
 
-export interface Post {
+export interface PostResponseDTO {
   id: number;
   title: string;
   slug: string;
   content: string;
   imageUrls: string[];
-  createdAt: Date;
-  updatedAt: Date;
-  author: UserResponseDTO;
+  createdAt: string;
+  updatedAt: string;
+  authorUsername: string;
   categories: CategoryDTO[];
   tags: string[];
 }

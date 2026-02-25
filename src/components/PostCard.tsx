@@ -1,133 +1,121 @@
 "use client";
-import { useState } from "react";
-import { Post } from "@/app/types";
+import { PostResponseDTO, UserResponseDTO } from "@/app/types";
 
 interface PostCardProps {
-  post: Post;
+  post: PostResponseDTO;
+  author?: UserResponseDTO;
 }
 
-export default function PostCard({ post }: PostCardProps) {
-  const [likes, setLikes] = useState(0);
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setLikes((prev) => prev + 1);
-  };
-
-  // Create a clean excerpt from the content
+export default function PostCard({ post, author }: PostCardProps) {
   const excerpt = post.content
     ? post.content.replace(/<[^>]*>/g, "").substring(0, 160) + "..."
     : "";
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 py-4 group cursor-pointer">
-      {/* Content Column */}
-      <div className="flex-1 flex flex-col justify-between order-2 md:order-1">
-        <div>
-          {/* Author Info */}
-          <div className="flex items-center space-x-2 mb-3">
-            {post.author.profileImageUrl ? (
-              <img
-                src={post.author.profileImageUrl}
-                alt={post.author.username}
-                className="h-6 w-6 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all"
-              />
-            ) : (
-              <div className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 uppercase">
-                {post.author.firstName?.[0] || post.author.username?.[0]}
+    <article className="flex flex-col md:flex-row gap-6 md:gap-8 p-5 md:p-6 bg-white rounded-2xl border border-slate-200 min-w-0 w-full max-w-full">
+      <div className="flex-1 flex flex-col justify-between order-2 md:order-1 min-w-0 w-full">
+        <div className="min-w-0 w-full">
+          {author && (
+            <div className="flex items-center gap-3 mb-4 min-w-0">
+              {author.profileImageUrl ? (
+                <img
+                  src={author.profileImageUrl}
+                  alt={author.username}
+                  className="h-8 w-8 rounded-full object-cover ring-2 ring-slate-100 shrink-0"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-600 uppercase ring-2 ring-transparent shrink-0">
+                  {author.firstName?.[0] || author.username?.[0]}
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-sm min-w-0 truncate">
+                <span className="font-semibold text-slate-900 truncate">
+                  {author.firstName} {author.lastName}
+                </span>
+                <span className="text-slate-300 px-1 shrink-0">•</span>
+                <time
+                  dateTime={post.createdAt}
+                  className="text-slate-500 font-medium shrink-0"
+                >
+                  {new Date(post.createdAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </time>
               </div>
-            )}
-            <span className="text-xs font-semibold text-gray-900">
-              {post.author.firstName} {post.author.lastName}
-            </span>
-            <span className="text-gray-300">•</span>
-            <span className="text-xs text-gray-400">
-              {new Date(post.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}
-            </span>
-          </div>
+            </div>
+          )}
 
-          {/* Title */}
-          <h2 className="text-xl md:text-2xl font-serif font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-2 leading-tight">
+          {!author && (
+            <div className="flex items-center gap-2 text-sm mb-4 min-w-0">
+              <time
+                dateTime={post.createdAt}
+                className="text-slate-500 font-medium shrink-0"
+              >
+                {new Date(post.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </time>
+            </div>
+          )}
+
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 leading-snug tracking-tight break-words [overflow-wrap:anywhere]">
             {post.title}
           </h2>
 
-          {/* Excerpt */}
-          <p className="text-gray-500 font-light text-sm md:text-base leading-relaxed line-clamp-3 mb-4">
+          <p className="text-slate-600 text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-3 mb-6 break-words [overflow-wrap:anywhere] min-w-0 w-full">
             {excerpt}
           </p>
         </div>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-between mt-auto">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between mt-auto pt-2 shrink-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {post.categories?.slice(0, 2).map((cat) => (
+              <span
+                key={cat.id}
+                className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap"
+              >
+                {cat.name}
+              </span>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleLike}
-              className="flex items-center space-x-1.5 text-gray-400 hover:text-red-500 transition-colors group/like"
+              className="text-slate-400 hover:text-indigo-500 transition-colors p-2 hover:bg-indigo-50 rounded-full active:scale-95 shrink-0"
+              aria-label="Save post"
             >
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={`h-5 w-5 ${
-                  likes > 0 ? "fill-red-500 text-red-500" : "fill-none"
-                }`}
-                viewBox="0 0 24 24"
+                className="w-5 h-5"
+                fill="none"
                 stroke="currentColor"
-                strokeWidth={1.5}
+                viewBox="0 0 24 24"
+                strokeWidth={2}
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
                 />
               </svg>
-              <span className="text-xs font-medium">
-                {likes > 0 ? likes : "Like"}
-              </span>
             </button>
-            <div className="flex gap-2">
-              {post.categories?.slice(0, 2).map((cat) => (
-                <span
-                  key={cat.id}
-                  className="px-2 py-0.5 bg-gray-50 text-gray-500 text-[10px] uppercase tracking-wider font-bold rounded-full"
-                >
-                  {cat.name}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-gray-300">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-              />
-            </svg>
           </div>
         </div>
       </div>
 
-      {/* Image Column */}
       {post.imageUrls && post.imageUrls.length > 0 && (
-        <div className="w-full md:w-48 lg:w-56 h-32 md:h-auto order-1 md:order-2 overflow-hidden rounded-xl border border-gray-50">
+        <div className="w-full md:w-56 lg:w-64 order-1 md:order-2 shrink-0 rounded-xl overflow-hidden bg-slate-50 self-start">
           <img
             src={post.imageUrls[0]}
             alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-auto block"
             loading="lazy"
           />
         </div>
       )}
-    </div>
+    </article>
   );
 }
