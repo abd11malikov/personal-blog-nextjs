@@ -260,7 +260,7 @@ export default function CreatePostPage() {
                   placeholder={
                     tags.length === 0 ? "Type tag and press Enter..." : ""
                   }
-                  className="flex-1 p-1 outline-none text-sm min-w-[120px]"
+                  className="flex-1 p-1 outline-none text-sm min-w-30"
                 />
               </div>
             </div>

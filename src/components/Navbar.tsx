@@ -10,6 +10,7 @@ export default function Navbar() {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -96,7 +97,7 @@ export default function Navbar() {
               About
             </Link>
 
-            <div className="h-4 w-[1px] bg-gray-200 mx-2"></div>
+            <div className="h-4 w-px bg-gray-200 mx-2"></div>
 
             {mounted ? (
               username ? (
@@ -140,26 +141,109 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Icon (Placeholder for functionality) */}
+          {/* Mobile Menu Icon */}
           <div className="md:hidden flex items-center">
-            <button className="text-gray-500 p-2">
+            <button
+              className="text-gray-500 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+              onClick={() => setIsOpen(!isOpen)}
+            >
               <svg
                 className="w-6 h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16m-7 6h7"
-                />
+                {isOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16m-7 6h7"
+                  />
+                )}
               </svg>
             </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu Content */}
+      {isOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 py-4 px-4 space-y-4 shadow-inner">
+          <div className="flex flex-col space-y-1">
+            <Link
+              href="/"
+              onClick={() => setIsOpen(false)}
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+            >
+              Home
+            </Link>
+            <Link
+              href="/about"
+              onClick={() => setIsOpen(false)}
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+            >
+              About
+            </Link>
+          </div>
+
+          <div className="h-px bg-gray-100 mx-2"></div>
+
+          {mounted ? (
+            username ? (
+              <div className="flex flex-col space-y-3">
+                <Link
+                  href={`/${username}`}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-xs">
+                    {username[0].toUpperCase()}
+                  </div>
+                  <span className="text-sm font-bold text-gray-700">
+                    @{username}
+                  </span>
+                </Link>
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsOpen(false);
+                  }}
+                  className="w-full text-left bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 hover:text-red-600 hover:border-red-100 transition-all shadow-sm"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 pt-2">
+                <Link
+                  href="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="text-center text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-gray-100"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setIsOpen(false)}
+                  className="text-center bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition-all shadow-sm active:scale-95"
+                >
+                  Get Started
+                </Link>
+              </div>
+            )
+          ) : (
+            <div className="h-24 bg-gray-100 animate-pulse rounded-lg"></div>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
