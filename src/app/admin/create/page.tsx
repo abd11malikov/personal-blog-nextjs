@@ -49,9 +49,7 @@ export default function CreatePostPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
-          "http://134.122.69.28:4000/api/categories",
-        );
+        const response = await fetch("https://api.webnote.uz/api/categories");
         if (response.ok) {
           const data = await response.json();
           setCategories(data);
@@ -159,7 +157,7 @@ export default function CreatePostPage() {
     );
 
     try {
-      const response = await fetch("http://134.122.69.28:4000/api/posts", {
+      const response = await fetch("https://api.webnote.uz/api/posts", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

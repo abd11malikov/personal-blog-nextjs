@@ -46,9 +46,7 @@ export default function EditPostPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
-          "http://134.122.69.28:4000/api/categories",
-        );
+        const response = await fetch("https://api.webnote.uz/api/categories");
         if (response.ok) {
           const data = await response.json();
           setCategories(data);
@@ -73,7 +71,7 @@ export default function EditPostPage() {
 
       try {
         const response = await fetch(
-          `http://134.122.69.28:4000/api/posts/slug/${slug}`,
+          `https://api.webnote.uz/api/posts/slug/${slug}`,
         );
         if (!response.ok) {
           throw new Error("Failed to fetch post");
@@ -207,7 +205,7 @@ export default function EditPostPage() {
 
     try {
       const response = await fetch(
-        `http://134.122.69.28:4000/api/posts/${postId}`,
+        `https://api.webnote.uz/api/posts/${postId}`,
         {
           method: "PUT",
           headers: {

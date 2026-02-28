@@ -7,12 +7,9 @@ import { PostResponseDTO, UserResponseDTO } from "@/app/types";
 
 async function getPost(slug: string): Promise<PostResponseDTO | null> {
   try {
-    const res = await fetch(
-      `http://134.122.69.28:4000/api/posts/slug/${slug}`,
-      {
-        cache: "no-store",
-      },
-    );
+    const res = await fetch(`https://api.webnote.uz/api/posts/slug/${slug}`, {
+      cache: "no-store",
+    });
 
     if (!res.ok) {
       if (res.status === 404) return null;
@@ -28,7 +25,7 @@ async function getPost(slug: string): Promise<PostResponseDTO | null> {
 
 async function getAuthor(username: string): Promise<UserResponseDTO | null> {
   try {
-    const res = await fetch(`http://134.122.69.28:4000/api/users/${username}`, {
+    const res = await fetch(`https://api.webnote.uz/api/users/${username}`, {
       cache: "no-store",
     });
 

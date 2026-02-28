@@ -62,7 +62,7 @@ export default function RegisterPage() {
         data.append("image", image);
       }
 
-      const response = await fetch("http://134.122.69.28:4000/api/users", {
+      const response = await fetch("https://api.webnote.uz/api/users", {
         method: "POST",
         body: data,
       });

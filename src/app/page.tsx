@@ -28,7 +28,7 @@ export default function Home() {
 
         // Fetch User Details which now includes posts for efficiency
         const userResponse = await fetch(
-          `http://134.122.69.28:4000/api/users/${username}`,
+          `https://api.webnote.uz/api/users/${username}`,
           {
             headers: {
               ...(token ? { Authorization: `Bearer ${token}` } : {}),

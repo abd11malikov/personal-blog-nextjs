@@ -34,7 +34,7 @@ export default function ClientDeleteButton({
 
     try {
       const response = await fetch(
-        `http://134.122.69.28:4000/api/posts/${postId}`,
+        `https://api.webnote.uz/api/posts/${postId}`,
         {
           method: "DELETE",
           headers: {
