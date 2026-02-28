@@ -6,7 +6,7 @@ export default function AboutPage() {
         {/* --- HERO / INTRO --- */}
         <section className="text-center">
           <img 
-            src="https://avatars.githubusercontent.com/u/125759094?s=400&u=57c065159eba42cd05093fdf38a96187b0a87b88&v=4"
+            src="https://pub-89e3ffab5507464293c0bfee94f64d24.r2.dev/photo_2026-03-01%2012.44.07%E2%80%AFAM.jpeg"
             alt="Otabek Abdumalikov" 
             className="w-32 h-32 rounded-full mx-auto mb-6 border-4 border-white shadow-lg" 
           />

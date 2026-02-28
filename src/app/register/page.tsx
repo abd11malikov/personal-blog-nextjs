@@ -28,9 +28,13 @@ export default function RegisterPage() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
+    let value = e.target.value;
+    if (e.target.name === "username") {
+      value = value.toLowerCase();
+    }
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
     }));
   };
 
@@ -195,6 +199,7 @@ export default function RegisterPage() {
               className="w-full p-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-gray-200 focus:outline-none transition-all"
               placeholder="johndoe"
               required
+              minLength={4}
             />
           </div>
 

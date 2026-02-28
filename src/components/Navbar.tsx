@@ -22,7 +22,7 @@ export default function Navbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/${searchQuery.trim().replace("@", "")}`);
+      router.push(`/${searchQuery.trim().toLowerCase().replace("@", "")}`);
       setSearchQuery("");
       setIsSearchFocused(false);
     }
@@ -39,7 +39,7 @@ export default function Navbar() {
                 <span className="text-white font-bold text-xl">W</span>
               </div>
               <span className="text-xl font-black text-gray-900 tracking-tight hidden sm:block">
-                WebNotes
+                WebNote
               </span>
             </Link>
           </div>
@@ -65,7 +65,7 @@ export default function Navbar() {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                 placeholder="Search usernames..."
