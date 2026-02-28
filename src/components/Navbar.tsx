@@ -22,7 +22,6 @@ export default function Navbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Assuming users are viewed at /[username]
       router.push(`/${searchQuery.trim().replace("@", "")}`);
       setSearchQuery("");
       setIsSearchFocused(false);

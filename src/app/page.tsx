@@ -28,7 +28,7 @@ export default function Home() {
 
         // Fetch User Details which now includes posts for efficiency
         const userResponse = await fetch(
-          `http://localhost:8080/api/users/${username}`,
+          `http://134.122.69.28:4000/api/users/${username}`,
           {
             headers: {
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -206,10 +206,10 @@ export default function Home() {
               Why reinvent the wheel?
             </h2>
             <p className="text-lg text-gray-400 leading-relaxed mb-10 font-medium">
-              Building a CMS from scratch isn&apos;t just about the tool—it&apos;s about
-              mastering mechanics. I built WebNotes to dive deep into Full-Stack
-              Architecture, secure authentication flows, and production-grade
-              deployments.
+              Building a CMS from scratch isn&apos;t just about the
+              tool—it&apos;s about mastering mechanics. I built WebNotes to dive
+              deep into Full-Stack Architecture, secure authentication flows,
+              and production-grade deployments.
             </p>
             <Link
               href="/about"

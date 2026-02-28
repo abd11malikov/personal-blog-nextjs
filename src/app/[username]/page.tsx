@@ -27,7 +27,7 @@ export default function UserProfile() {
 
         // Fetch User Details - now includes posts for efficiency
         const userResponse = await fetch(
-          `http://localhost:8080/api/users/${encodeURIComponent(username)}`,
+          `http://134.122.69.28:4000/api/users/${encodeURIComponent(username)}`,
           {
             headers: {
               "Content-Type": "application/json",

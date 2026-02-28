@@ -50,7 +50,7 @@ export default function SettingsPage() {
     async function fetchUserData() {
       try {
         const response = await fetch(
-          `http://localhost:8080/api/users/${username}`,
+          `http://134.122.69.28:4000/api/users/${username}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -137,7 +137,7 @@ export default function SettingsPage() {
       }
 
       const response = await fetch(
-        `http://localhost:8080/api/users/${username}`,
+        `http://134.122.69.28:4000/api/users/${username}`,
         {
           method: "PUT",
           headers: {

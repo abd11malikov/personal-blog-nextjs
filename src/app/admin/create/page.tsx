@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_TOTAL_SIZE_MB = 20;
@@ -48,7 +49,9 @@ export default function CreatePostPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/categories");
+        const response = await fetch(
+          "http://134.122.69.28:4000/api/categories",
+        );
         if (response.ok) {
           const data = await response.json();
           setCategories(data);
@@ -156,7 +159,7 @@ export default function CreatePostPage() {
     );
 
     try {
-      const response = await fetch("http://localhost:8080/api/posts", {
+      const response = await fetch("http://134.122.69.28:4000/api/posts", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -324,7 +327,7 @@ export default function CreatePostPage() {
                       className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border"
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <img
+                        <Image
                           src={URL.createObjectURL(file)}
                           alt="preview"
                           className="w-10 h-10 object-cover rounded-md flex-shrink-0"

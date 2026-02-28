@@ -34,7 +34,7 @@ export default function ClientDeleteButton({
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/posts/${postId}`,
+        `http://134.122.69.28:4000/api/posts/${postId}`,
         {
           method: "DELETE",
           headers: {

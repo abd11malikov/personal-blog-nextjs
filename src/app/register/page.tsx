@@ -3,10 +3,10 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();
-  
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -16,9 +16,8 @@ export default function RegisterPage() {
     username: "",
     email: "",
     password: "",
-    bio: "", 
+    bio: "",
   });
-
 
   const [image, setImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -27,14 +26,13 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
   };
-
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,23 +50,21 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-
       const data = new FormData();
 
       const jsonBlob = new Blob([JSON.stringify(formData)], {
         type: "application/json",
       });
-      
-      data.append("data", jsonBlob);
 
+      data.append("data", jsonBlob);
 
       if (image) {
         data.append("image", image);
       }
 
-      const response = await fetch("http://localhost:8080/api/users", {
+      const response = await fetch("http://134.122.69.28:4000/api/users", {
         method: "POST",
-        body: data, 
+        body: data,
       });
 
       if (!response.ok) {
@@ -112,23 +108,41 @@ export default function RegisterPage() {
               accept="image/*"
               className="hidden"
             />
-            <div 
+            <div
               onClick={() => fileInputRef.current?.click()}
               className="w-24 h-24 rounded-full bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors overflow-hidden relative group"
             >
               {previewUrl ? (
-                <img 
-                  src={previewUrl} 
-                  alt="Preview" 
+                <Image
+                  src={previewUrl}
+                  alt="Preview"
+                  fill
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="text-gray-400 flex flex-col items-center">
-                  <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <svg
+                    className="w-8 h-8 mb-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
                   </svg>
-                  <span className="text-[10px] uppercase font-bold tracking-wider">Photo</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider">
+                    Photo
+                  </span>
                 </div>
               )}
               {/* Hover overlay */}
