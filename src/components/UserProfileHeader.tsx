@@ -46,11 +46,13 @@ const SocialIcon = ({ platform, url }: { platform: string; url: string }) => {
   // Determine key based on URL content
   let detectedKey = "link";
   if (lowerUrl.includes("github.com")) detectedKey = "github";
-  else if (lowerUrl.includes("twitter.com") || lowerUrl.includes("x.com")) detectedKey = "twitter";
+  else if (lowerUrl.includes("twitter.com") || lowerUrl.includes("x.com"))
+    detectedKey = "twitter";
   else if (lowerUrl.includes("facebook.com")) detectedKey = "facebook";
   else if (lowerUrl.includes("linkedin.com")) detectedKey = "linkedin";
   else if (lowerUrl.includes("instagram.com")) detectedKey = "instagram";
-  else if (lowerUrl.includes("t.me") || lowerUrl.includes("telegram.org")) detectedKey = "telegram";
+  else if (lowerUrl.includes("t.me") || lowerUrl.includes("telegram.org"))
+    detectedKey = "telegram";
   else if (lowerUrl.includes("tiktok.com")) detectedKey = "tiktok";
 
   const isUnknown = detectedKey === "link";
@@ -82,22 +84,22 @@ const SocialIcon = ({ platform, url }: { platform: string; url: string }) => {
   );
 };
 
-export default function UserProfileHeader({ user, postCount }: UserProfileHeaderProps) {
+export default function UserProfileHeader({
+  user,
+  postCount,
+}: UserProfileHeaderProps) {
   const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
   const displayName = fullName || user.username;
   const initial = user.firstName?.charAt(0) || user.username?.charAt(0) || "?";
 
   return (
     <div className="w-full bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden relative">
-      
       {/* SHORTER TOP BANNER: Reduced from h-32 to h-16 (desktop h-20) */}
       <div className="h-16 md:h-20 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 w-full" />
 
       <div className="px-6 md:px-10 pb-8 md:pb-12 relative">
-        
         {/* AVATAR PLACEMENT: Reduced negative margin (-mt-8 md:-mt-12) to match the shorter banner */}
         <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-8 -mt-9 md:-mt-12">
-          
           {/* Profile Image Column */}
           <div className="flex-shrink-0 flex justify-center md:block">
             {user.profileImageUrl ? (
@@ -117,7 +119,6 @@ export default function UserProfileHeader({ user, postCount }: UserProfileHeader
 
           {/* User Content Column */}
           <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left pt-2 md:pt-14">
-            
             {/* Main Info */}
             <div className="w-full flex flex-col md:flex-row justify-between items-center md:items-start gap-4">
               <div>
@@ -142,20 +143,26 @@ export default function UserProfileHeader({ user, postCount }: UserProfileHeader
 
             {/* Bio */}
             {user.bio && (
-              <p className="text-gray-600 mt-5 leading-relaxed max-w-2xl text-[15px]">
+              <p className="text-gray-600 mt-5 leading-relaxed max-w-2xl text-[15px] whitespace-pre-wrap">
                 {user.bio}
               </p>
             )}
 
             {/* Social Links */}
-            {user.socialMediaLinks && Object.entries(user.socialMediaLinks).length > 0 && (
-              <div className="flex flex-wrap justify-center md:justify-start gap-2.5 mt-6">
-                {Object.entries(user.socialMediaLinks).map(([platform, url]) => (
-                  <SocialIcon key={platform} platform={platform} url={url} />
-                ))}
-              </div>
-            )}
-
+            {user.socialMediaLinks &&
+              Object.entries(user.socialMediaLinks).length > 0 && (
+                <div className="flex flex-wrap justify-center md:justify-start gap-2.5 mt-6">
+                  {Object.entries(user.socialMediaLinks).map(
+                    ([platform, url]) => (
+                      <SocialIcon
+                        key={platform}
+                        platform={platform}
+                        url={url}
+                      />
+                    ),
+                  )}
+                </div>
+              )}
           </div>
         </div>
       </div>

@@ -320,7 +320,7 @@ export default function SettingsPage() {
                   rows={4}
                   value={formData.bio}
                   onChange={handleInputChange}
-                  className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none transition-all resize-none"
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none transition-all"
                   placeholder="Write a short bio about yourself..."
                 />
               </div>
