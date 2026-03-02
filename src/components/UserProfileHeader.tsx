@@ -5,13 +5,9 @@ interface UserProfileHeaderProps {
   postCount: number;
 }
 
-/**
- * Helper to map platform names or URLs to SVG icons
- */
 const SocialIcon = ({ platform, url }: { platform: string; url: string }) => {
   const lowerUrl = url.toLowerCase();
 
-  // Map of platforms to their respective SVG paths
   const icons: Record<string, React.ReactNode> = {
     github: (
       <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
@@ -43,7 +39,6 @@ const SocialIcon = ({ platform, url }: { platform: string; url: string }) => {
     ),
   };
 
-  // Determine key based on URL content
   let detectedKey = "link";
   if (lowerUrl.includes("github.com")) detectedKey = "github";
   else if (lowerUrl.includes("twitter.com") || lowerUrl.includes("x.com"))
@@ -62,12 +57,40 @@ const SocialIcon = ({ platform, url }: { platform: string; url: string }) => {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex items-center justify-center bg-gray-50 border border-gray-100 p-2.5 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "7px 12px",
+        background: "rgba(245,240,232,0.04)",
+        border: "1px solid rgba(245,240,232,0.1)",
+        color: "rgba(245,240,232,0.45)",
+        textDecoration: "none",
+        transition: "border-color 0.2s, color 0.2s, background 0.2s",
+        fontFamily: "'DM Mono', monospace",
+        fontSize: "0.6rem",
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor =
+          "rgba(192,57,43,0.4)";
+        (e.currentTarget as HTMLElement).style.color = "#c0392b";
+        (e.currentTarget as HTMLElement).style.background =
+          "rgba(192,57,43,0.06)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor =
+          "rgba(245,240,232,0.1)";
+        (e.currentTarget as HTMLElement).style.color = "rgba(245,240,232,0.45)";
+        (e.currentTarget as HTMLElement).style.background =
+          "rgba(245,240,232,0.04)";
+      }}
       aria-label={platform}
       title={platform}
     >
       <svg
-        className="w-4 h-4"
+        style={{ width: "13px", height: "13px", flexShrink: 0 }}
         fill={isUnknown ? "none" : "currentColor"}
         stroke={isUnknown ? "currentColor" : "none"}
         strokeWidth={isUnknown ? 2 : 0}
@@ -75,11 +98,7 @@ const SocialIcon = ({ platform, url }: { platform: string; url: string }) => {
       >
         {icons[detectedKey]}
       </svg>
-      {isUnknown && (
-        <span className="ml-2 text-xs font-semibold text-gray-700 tracking-wide pr-1">
-          {platform}
-        </span>
-      )}
+      {isUnknown && <span>{platform}</span>}
     </a>
   );
 };
@@ -93,78 +112,240 @@ export default function UserProfileHeader({
   const initial = user.firstName?.charAt(0) || user.username?.charAt(0) || "?";
 
   return (
-    <div className="w-full bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden relative">
-      {/* SHORTER TOP BANNER: Reduced from h-32 to h-16 (desktop h-20) */}
-      <div className="h-16 md:h-20 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 w-full" />
+    <div
+      style={{
+        width: "100%",
+        borderTop: "1px solid rgba(245,240,232,0.08)",
+        borderBottom: "1px solid rgba(245,240,232,0.08)",
+        padding: "48px 0",
+        position: "relative",
+      }}
+    >
+      {/* Subtle corner mark */}
+      <div
+        style={{
+          position: "absolute",
+          top: "-1px",
+          left: "0",
+          width: "40px",
+          height: "3px",
+          background: "#c0392b",
+        }}
+      />
 
-      <div className="px-6 md:px-10 pb-8 md:pb-12 relative">
-        {/* AVATAR PLACEMENT: Reduced negative margin (-mt-8 md:-mt-12) to match the shorter banner */}
-        <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-8 -mt-9 md:-mt-12">
-          {/* Profile Image Column */}
-          <div className="flex-shrink-0 flex justify-center md:block">
-            {user.profileImageUrl ? (
-              <img
-                src={user.profileImageUrl}
-                alt={displayName}
-                className="w-28 h-28 md:w-36 md:h-36 rounded-full object-cover bg-white p-1 ring-1 ring-gray-200 shadow-md"
-              />
-            ) : (
-              <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-50 flex items-center justify-center text-4xl md:text-5xl font-medium text-gray-400 bg-white p-1 ring-1 ring-gray-200 shadow-md">
-                <div className="w-full h-full rounded-full bg-gray-50 flex items-center justify-center">
-                  {initial.toUpperCase()}
-                </div>
-              </div>
-            )}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "32px",
+        }}
+      >
+        {/* Top row: avatar + name + stats */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "28px",
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Avatar */}
+          {user.profileImageUrl ? (
+            <img
+              src={user.profileImageUrl}
+              alt={displayName}
+              style={{
+                width: "72px",
+                height: "72px",
+                objectFit: "cover",
+                flexShrink: 0,
+                border: "1px solid rgba(245,240,232,0.1)",
+                filter: "grayscale(15%)",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "72px",
+                height: "72px",
+                background: "rgba(192,57,43,0.1)",
+                border: "1px solid rgba(192,57,43,0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 700,
+                fontSize: "1.8rem",
+                color: "#c0392b",
+              }}
+            >
+              {initial.toUpperCase()}
+            </div>
+          )}
+
+          {/* Name + handle + stats */}
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            {/* Label */}
+            <p
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.58rem",
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "#c0392b",
+                margin: 0,
+              }}
+            >
+              Author
+            </p>
+
+            {/* Display name */}
+            <h1
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 700,
+                fontSize: "clamp(1.5rem, 3vw, 2.2rem)",
+                color: "#f5f0e8",
+                lineHeight: 1.1,
+                letterSpacing: "-0.02em",
+                margin: 0,
+                wordBreak: "break-word",
+              }}
+            >
+              {displayName}
+            </h1>
+
+            {/* Handle + article count */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "16px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "0.65rem",
+                  letterSpacing: "0.1em",
+                  color: "rgba(245,240,232,0.35)",
+                  textTransform: "uppercase",
+                }}
+              >
+                @{user.username}
+              </span>
+
+              <span
+                style={{
+                  color: "rgba(245,240,232,0.1)",
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "0.6rem",
+                }}
+              >
+                /
+              </span>
+
+              <span
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "0.6rem",
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "rgba(245,240,232,0.3)",
+                }}
+              >
+                {postCount} {postCount === 1 ? "article" : "articles"}
+              </span>
+            </div>
           </div>
 
-          {/* User Content Column */}
-          <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left pt-2 md:pt-14">
-            {/* Main Info */}
-            <div className="w-full flex flex-col md:flex-row justify-between items-center md:items-start gap-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-                  {displayName}
-                </h1>
-                <p className="text-sm font-medium text-gray-500 mt-1">
-                  @{user.username}
-                </p>
-              </div>
-
-              {/* Stats Block */}
-              <div className="flex flex-col items-center md:items-end bg-gray-50 px-5 py-3 rounded-2xl border border-gray-100">
-                <span className="text-xl font-bold text-gray-900 leading-none">
-                  {postCount}
-                </span>
-                <span className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mt-1">
-                  Articles
-                </span>
-              </div>
-            </div>
-
-            {/* Bio */}
-            {user.bio && (
-              <p className="text-gray-600 mt-5 leading-relaxed max-w-2xl text-[15px] whitespace-pre-wrap">
-                {user.bio}
-              </p>
-            )}
-
-            {/* Social Links */}
-            {user.socialMediaLinks &&
-              Object.entries(user.socialMediaLinks).length > 0 && (
-                <div className="flex flex-wrap justify-center md:justify-start gap-2.5 mt-6">
-                  {Object.entries(user.socialMediaLinks).map(
-                    ([platform, url]) => (
-                      <SocialIcon
-                        key={platform}
-                        platform={platform}
-                        url={url}
-                      />
-                    ),
-                  )}
-                </div>
-              )}
+          {/* Stats block — right-aligned */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: "4px",
+              flexShrink: 0,
+              borderLeft: "1px solid rgba(245,240,232,0.07)",
+              paddingLeft: "28px",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 900,
+                fontSize: "2.4rem",
+                lineHeight: 1,
+                color: "#f5f0e8",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              {postCount}
+            </span>
+            <span
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.55rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "rgba(245,240,232,0.25)",
+              }}
+            >
+              Published
+            </span>
           </div>
         </div>
+
+        {/* Bio */}
+        {user.bio && (
+          <div
+            style={{
+              borderLeft: "2px solid rgba(192,57,43,0.4)",
+              paddingLeft: "20px",
+              maxWidth: "640px",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.78rem",
+                lineHeight: 1.85,
+                color: "rgba(245,240,232,0.5)",
+                margin: 0,
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {user.bio}
+            </p>
+          </div>
+        )}
+
+        {/* Social links */}
+        {user.socialMediaLinks &&
+          Object.entries(user.socialMediaLinks).length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
+            >
+              {Object.entries(user.socialMediaLinks).map(([platform, url]) => (
+                <SocialIcon key={platform} platform={platform} url={url} />
+              ))}
+            </div>
+          )}
       </div>
     </div>
   );

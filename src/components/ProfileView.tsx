@@ -17,89 +17,280 @@ export default function ProfileView({
   isDashboard = false,
 }: ProfileViewProps) {
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6">
-      {/* Top Navigation / Breadcrumb Style Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-        <div className="flex items-center space-x-2 text-sm text-gray-400 uppercase tracking-widest font-bold">
-          <Link href="/" className="hover:text-gray-900 transition-colors">
+    <div
+      style={{
+        maxWidth: "1080px",
+        margin: "0 auto",
+        padding: "0 40px",
+        fontFamily: "'DM Mono', monospace",
+      }}
+    >
+      {/* ── Top bar ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "56px",
+          flexWrap: "wrap",
+          gap: "20px",
+          animation: "fadeUp 0.6s cubic-bezier(.22,1,.36,1) both",
+        }}
+      >
+        {/* Breadcrumb */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "0.65rem",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+          }}
+        >
+          <Link
+            href="/"
+            style={{
+              color: "rgba(245,240,232,0.4)",
+              textDecoration: "none",
+              transition: "color 0.2s",
+            }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget as HTMLElement).style.color = "#f5f0e8")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.color =
+                "rgba(245,240,232,0.4)")
+            }
+          >
             Home
           </Link>
-          <span>/</span>
-          <span className="text-gray-900">
-            {isDashboard ? "Dashboard" : "Author Profile"}
+          <span style={{ color: "rgba(245,240,232,0.15)" }}>—</span>
+          <span
+            style={{
+              color: "#c0392b",
+            }}
+          >
+            {isDashboard ? "Dashboard" : "Profile"}
           </span>
         </div>
 
+        {/* Dashboard actions */}
         {isDashboard && (
-          <div className="flex items-center space-x-3">
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <Link
               href="/settings"
-              className="px-5 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-full hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 20px",
+                background: "transparent",
+                border: "1px solid rgba(245,240,232,0.15)",
+                color: "rgba(245,240,232,0.6)",
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.68rem",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                transition: "border-color 0.2s, color 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  "rgba(245,240,232,0.35)";
+                (e.currentTarget as HTMLElement).style.color = "#f5f0e8";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor =
+                  "rgba(245,240,232,0.15)";
+                (e.currentTarget as HTMLElement).style.color =
+                  "rgba(245,240,232,0.6)";
+              }}
             >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+              </svg>
               Edit Profile
             </Link>
             <Link
               href="/admin/create"
-              className="px-5 py-2 text-sm font-semibold text-white bg-gray-900 rounded-full hover:bg-gray-800 transition-all shadow-md flex items-center gap-2"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "11px 24px",
+                background: "#c0392b",
+                color: "#f5f0e8",
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.68rem",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                position: "relative",
+                overflow: "hidden",
+                transition: "transform 0.2s",
+              }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLElement).style.transform =
+                  "translateY(-2px)")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.transform =
+                  "translateY(0)")
+              }
             >
               <svg
-                className="w-4 h-4"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24"
+                strokeWidth="2.5"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
+                <path d="M12 5v14M5 12h14" />
               </svg>
-              Write Article
+              New Post
             </Link>
           </div>
         )}
       </div>
 
-      {/* User Info Section */}
-      <div className="mb-16">
+      {/* ── Profile header ── */}
+      <div
+        style={{
+          marginBottom: "80px",
+          animation: "fadeUp 0.7s 0.1s cubic-bezier(.22,1,.36,1) both",
+        }}
+      >
         <UserProfileHeader user={user} postCount={posts.length} />
       </div>
 
-      {/* Posts Section */}
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-10">
-          <h2 className="text-3xl font-serif font-bold text-gray-900">
-            {isDashboard
-              ? "Your Published Stories"
-              : `Stories by ${user.firstName || user.username}`}
-          </h2>
-          <div className="h-px flex-1 bg-gray-100 ml-8 hidden sm:block"></div>
+      {/* ── Divider ── */}
+      <div
+        style={{
+          borderTop: "1px solid rgba(245,240,232,0.08)",
+          marginBottom: "64px",
+        }}
+      />
+
+      {/* ── Posts section ── */}
+      <div style={{ maxWidth: "720px" }}>
+        {/* Section heading */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "24px",
+            marginBottom: "56px",
+            animation: "fadeUp 0.7s 0.2s cubic-bezier(.22,1,.36,1) both",
+          }}
+        >
+          <div>
+            <p
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.6rem",
+                letterSpacing: "0.25em",
+                textTransform: "uppercase",
+                color: "#c0392b",
+                marginBottom: "8px",
+              }}
+            >
+              {posts.length} {posts.length === 1 ? "story" : "stories"}
+            </p>
+            <h2
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 700,
+                fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)",
+                color: "#f5f0e8",
+                lineHeight: 1.1,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {isDashboard
+                ? "Your Published Work"
+                : `Stories by ${user.firstName || user.username}`}
+            </h2>
+          </div>
         </div>
 
+        {/* Posts list */}
         {posts.length > 0 ? (
-          <div className="space-y-12">
-            {posts.map((post) => (
-              <div key={post.id} className="group relative">
+          <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+            {posts.map((post, i) => (
+              <div
+                key={post.id}
+                style={{
+                  position: "relative",
+                  borderBottom: "1px solid rgba(245,240,232,0.07)",
+                  animation: `fadeUp 0.7s ${0.25 + i * 0.07}s cubic-bezier(.22,1,.36,1) both`,
+                }}
+              >
+                {/* Dashboard edit button */}
                 {isDashboard && (
-                  <div className="absolute right-2 top-2 lg:right-auto lg:-left-12 lg:top-2 flex flex-col space-y-2 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "20px",
+                      right: "0",
+                      zIndex: 10,
+                      display: "flex",
+                      gap: "8px",
+                    }}
+                  >
                     <Link
                       href={`/admin/edit/${post.slug}`}
-                      className="p-2.5 bg-white/90 backdrop-blur-md lg:bg-white text-gray-500 hover:text-blue-600 rounded-full border border-gray-200 shadow-lg lg:shadow-sm transition-all"
-                      title="Edit Post"
+                      title="Edit"
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        background: "rgba(245,240,232,0.04)",
+                        border: "1px solid rgba(245,240,232,0.1)",
+                        color: "rgba(245,240,232,0.4)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        textDecoration: "none",
+                        transition:
+                          "background 0.2s, color 0.2s, border-color 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.background =
+                          "rgba(192,57,43,0.12)";
+                        (e.currentTarget as HTMLElement).style.color =
+                          "#c0392b";
+                        (e.currentTarget as HTMLElement).style.borderColor =
+                          "rgba(192,57,43,0.3)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.background =
+                          "rgba(245,240,232,0.04)";
+                        (e.currentTarget as HTMLElement).style.color =
+                          "rgba(245,240,232,0.4)";
+                        (e.currentTarget as HTMLElement).style.borderColor =
+                          "rgba(245,240,232,0.1)";
+                      }}
                     >
                       <svg
-                        className="w-5 h-5"
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24"
+                        strokeWidth="2"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                       </svg>
                     </Link>
                   </div>
@@ -107,64 +298,115 @@ export default function ProfileView({
 
                 <Link
                   href={`/post/${post.slug}`}
-                  className="block transition-transform duration-300 group-hover:-translate-y-1"
+                  style={{ display: "block", textDecoration: "none" }}
                 >
-                  {/* Passing user as author to PostCard to provide author info missing in PostResponseDTO */}
                   <PostCard post={post} author={user} />
                 </Link>
-                <div className="mt-8 border-b border-gray-50"></div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-24 px-6 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-            <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-sm">
-              <svg
-                className="w-8 h-8 text-gray-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M14 2v4a2 2 0 002 2h4"
-                />
-              </svg>
+          /* Empty state */
+          <div
+            style={{
+              padding: "72px 40px",
+              border: "1px dashed rgba(245,240,232,0.1)",
+              textAlign: "center",
+              animation: "fadeUp 0.7s 0.3s cubic-bezier(.22,1,.36,1) both",
+            }}
+          >
+            {/* Ghost icon */}
+            <div
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 900,
+                fontSize: "5rem",
+                color: "rgba(245,240,232,0.04)",
+                lineHeight: 1,
+                marginBottom: "32px",
+                userSelect: "none",
+              }}
+            >
+              ∅
             </div>
-            <h3 className="text-xl font-serif font-bold text-gray-900 mb-2">
-              No stories yet
-            </h3>
-            <p className="text-gray-500 max-w-xs mx-auto mb-8 font-light">
-              {isDashboard
-                ? "You haven't shared any of your thoughts with the world yet."
-                : "This author is currently preparing their first masterpiece."}
+
+            <p
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.6rem",
+                letterSpacing: "0.25em",
+                textTransform: "uppercase",
+                color: "#c0392b",
+                marginBottom: "16px",
+              }}
+            >
+              No Stories Yet
             </p>
+
+            <h3
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 700,
+                fontSize: "1.8rem",
+                color: "#f5f0e8",
+                marginBottom: "16px",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {isDashboard ? "The page is blank." : "Coming soon."}
+            </h3>
+
+            <p
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.75rem",
+                lineHeight: 1.8,
+                color: "rgba(245,240,232,0.35)",
+                maxWidth: "360px",
+                margin: "0 auto 40px",
+              }}
+            >
+              {isDashboard
+                ? "You haven't published anything yet. Every great writer starts with a single sentence."
+                : "This author is currently preparing their first story. Check back soon."}
+            </p>
+
             {isDashboard && (
               <Link
                 href="/admin/create"
-                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold transition-colors"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "14px 32px",
+                  background: "#c0392b",
+                  color: "#f5f0e8",
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  transition: "transform 0.2s",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLElement).style.transform =
+                    "translateY(-2px)")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLElement).style.transform =
+                    "translateY(0)")
+                }
               >
-                Start writing your first post
+                Write Your First Post
                 <svg
-                  className="w-4 h-4"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  viewBox="0 0 24 24"
+                  strokeWidth="2"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
+                  <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </Link>
             )}

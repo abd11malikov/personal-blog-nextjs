@@ -1,6 +1,48 @@
 @import "tailwindcss";
 
 :root {
-    --background: #ffffff;
-    --foreground: #171717;
+    --ink: #0a0a08;
+    --paper: #f5f0e8;
+    --cream: #ede8d8;
+    --rust: #c0392b;
+    --gold: #b8860b;
+    --muted: #6b6555;
+    --border: #2a2820;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: "DM Mono", monospace;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+::selection {
+    background: var(--rust);
+    color: var(--paper);
+}
+
+/* Tailwind responsive utilities used in page.tsx */
+@media (min-width: 768px) {
+    .hidden.md\:flex {
+        display: flex !important;
+    }
+    .md\:hidden {
+        display: none !important;
+    }
+    .grid-cols-1.md\:grid-cols-2 {
+        grid-template-columns: 1fr 1fr !important;
+    }
 }

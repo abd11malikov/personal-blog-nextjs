@@ -1,4 +1,5 @@
 "use client";
+
 import { PostResponseDTO, UserResponseDTO } from "@/app/types";
 
 interface PostCardProps {
@@ -8,114 +9,282 @@ interface PostCardProps {
 
 export default function PostCard({ post, author }: PostCardProps) {
   const excerpt = post.content
-    ? post.content.replace(/<[^>]*>/g, "").substring(0, 160) + "..."
+    ? post.content.replace(/<[^>]*>/g, "").substring(0, 180) + "..."
     : "";
 
+  const formattedDate = new Date(post.createdAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
   return (
-    <article className="flex flex-col md:flex-row gap-6 md:gap-8 p-5 md:p-6 bg-white rounded-2xl border border-slate-200 min-w-0 w-full max-w-full">
-      <div className="flex-1 flex flex-col justify-between order-2 md:order-1 min-w-0 w-full">
-        <div className="min-w-0 w-full">
-          {author && (
-            <div className="flex items-center gap-3 mb-4 min-w-0">
-              {author.profileImageUrl ? (
-                <img
-                  src={author.profileImageUrl}
-                  alt={author.username}
-                  className="h-8 w-8 rounded-full object-cover ring-2 ring-slate-100 shrink-0"
-                />
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs font-bold text-indigo-600 uppercase ring-2 ring-transparent shrink-0">
-                  {author.firstName?.[0] || author.username?.[0]}
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-sm min-w-0 truncate">
-                <span className="font-semibold text-slate-900 truncate">
-                  {author.firstName} {author.lastName}
-                </span>
-                <span className="text-slate-300 px-1 shrink-0">•</span>
-                <time
-                  dateTime={post.createdAt}
-                  className="text-slate-500 font-medium shrink-0"
-                >
-                  {new Date(post.createdAt).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </time>
-              </div>
-            </div>
-          )}
-
-          {!author && (
-            <div className="flex items-center gap-2 text-sm mb-4 min-w-0">
-              <time
-                dateTime={post.createdAt}
-                className="text-slate-500 font-medium shrink-0"
+    <article
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+        padding: "32px 0",
+        position: "relative",
+        cursor: "pointer",
+        transition: "opacity 0.2s",
+      }}
+      onMouseEnter={(e) =>
+        ((e.currentTarget as HTMLElement).style.opacity = "0.85")
+      }
+      onMouseLeave={(e) =>
+        ((e.currentTarget as HTMLElement).style.opacity = "1")
+      }
+    >
+      {/* Top meta row */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "16px",
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Author */}
+        {author && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            {author.profileImageUrl ? (
+              <img
+                src={author.profileImageUrl}
+                alt={author.username}
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  flexShrink: 0,
+                  border: "1px solid rgba(245,240,232,0.12)",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  background: "rgba(192,57,43,0.15)",
+                  border: "1px solid rgba(192,57,43,0.3)",
+                  color: "#c0392b",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "0.5rem",
+                  fontWeight: 500,
+                  flexShrink: 0,
+                }}
               >
-                {new Date(post.createdAt).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </time>
-            </div>
-          )}
+                {(
+                  author.firstName?.[0] ||
+                  author.username?.[0] ||
+                  "?"
+                ).toUpperCase()}
+              </div>
+            )}
+            <span
+              style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.6rem",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "rgba(245,240,232,0.45)",
+              }}
+            >
+              {author.firstName
+                ? `${author.firstName}${author.lastName ? ` ${author.lastName}` : ""}`
+                : author.username}
+            </span>
+          </div>
+        )}
 
-          <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 leading-snug tracking-tight break-words [overflow-wrap:anywhere]">
+        {author && (
+          <span
+            style={{
+              color: "rgba(245,240,232,0.12)",
+              fontFamily: "'DM Mono', monospace",
+              fontSize: "0.6rem",
+            }}
+          >
+            /
+          </span>
+        )}
+
+        {/* Date */}
+        <time
+          dateTime={post.createdAt}
+          style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "0.6rem",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "rgba(245,240,232,0.3)",
+          }}
+        >
+          {formattedDate}
+        </time>
+
+        {/* Categories */}
+        {post.categories && post.categories.length > 0 && (
+          <>
+            <span
+              style={{
+                color: "rgba(245,240,232,0.12)",
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.6rem",
+              }}
+            >
+              /
+            </span>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {post.categories.slice(0, 2).map((cat) => (
+                <span
+                  key={cat.id}
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: "0.55rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#c0392b",
+                    border: "1px solid rgba(192,57,43,0.3)",
+                    padding: "2px 8px",
+                  }}
+                >
+                  {cat.name}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Main content row */}
+      <div
+        style={{
+          display: "flex",
+          gap: "32px",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Title */}
+          <h2
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 700,
+              fontSize: "clamp(1.1rem, 2.5vw, 1.45rem)",
+              color: "#f5f0e8",
+              lineHeight: 1.25,
+              letterSpacing: "-0.02em",
+              marginBottom: "12px",
+              wordBreak: "break-word",
+            }}
+          >
             {post.title}
           </h2>
 
-          <p className="text-slate-600 text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-3 mb-6 break-words [overflow-wrap:anywhere] min-w-0 w-full">
+          {/* Excerpt */}
+          <p
+            style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: "0.78rem",
+              lineHeight: 1.75,
+              color: "rgba(245,240,232,0.4)",
+              marginBottom: "0",
+              wordBreak: "break-word",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
             {excerpt}
           </p>
         </div>
 
-        <div className="flex items-center justify-between mt-auto pt-2 shrink-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            {post.categories?.slice(0, 2).map((cat) => (
-              <span
-                key={cat.id}
-                className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap"
-              >
-                {cat.name}
-              </span>
-            ))}
+        {/* Thumbnail */}
+        {post.imageUrls && post.imageUrls.length > 0 && (
+          <div
+            style={{
+              width: "100px",
+              flexShrink: 0,
+              alignSelf: "center",
+              overflow: "hidden",
+              border: "1px solid rgba(245,240,232,0.07)",
+            }}
+            className="hidden sm:block"
+          >
+            <img
+              src={post.imageUrls[0]}
+              alt={post.title}
+              style={{
+                width: "100%",
+                height: "68px",
+                objectFit: "cover",
+                display: "block",
+                filter: "grayscale(20%)",
+                transition: "filter 0.3s",
+              }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLImageElement).style.filter =
+                  "grayscale(0%)")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLImageElement).style.filter =
+                  "grayscale(20%)")
+              }
+              loading="lazy"
+            />
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              className="text-slate-400 hover:text-indigo-500 transition-colors p-2 hover:bg-indigo-50 rounded-full active:scale-95 shrink-0"
-              aria-label="Save post"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
-      {post.imageUrls && post.imageUrls.length > 0 && (
-        <div className="w-full md:w-56 lg:w-64 order-1 md:order-2 shrink-0 rounded-xl overflow-hidden bg-slate-50 self-start">
-          <img
-            src={post.imageUrls[0]}
-            alt={post.title}
-            className="w-full h-auto block"
-            loading="lazy"
+      {/* Read arrow */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          marginTop: "4px",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "0.58rem",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "rgba(245,240,232,0.2)",
+            transition: "color 0.2s",
+          }}
+        >
+          Read
+        </span>
+        <svg
+          width="16"
+          height="8"
+          viewBox="0 0 24 12"
+          fill="none"
+          stroke="rgba(245,240,232,0.2)"
+          strokeWidth="1.5"
+        >
+          <path
+            d="M0 6h22M16 1l6 5-6 5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-        </div>
-      )}
+        </svg>
+      </div>
     </article>
   );
 }

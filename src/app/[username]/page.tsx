@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import ProfileView from "@/components/ProfileView";
 import { PostResponseDTO, UserResponseDTO } from "../types";
+import { BASE_STYLES } from "@/lib/theme";
+import Link from "next/link";
 
 export default function UserProfile() {
   const params = useParams();
@@ -18,15 +19,55 @@ export default function UserProfile() {
   const [posts, setPosts] = useState<PostResponseDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const [scrollPct, setScrollPct] = useState(0);
+
+  /* ── cursor ── */
+  useEffect(() => {
+    let raf: number;
+    let rx = 0,
+      ry = 0;
+    const onMove = (e: MouseEvent) => {
+      if (cursorRef.current) {
+        cursorRef.current.style.left = e.clientX + "px";
+        cursorRef.current.style.top = e.clientY + "px";
+      }
+      rx += (e.clientX - rx) * 0.12;
+      ry += (e.clientY - ry) * 0.12;
+    };
+    const loop = () => {
+      if (ringRef.current) {
+        ringRef.current.style.left = rx + "px";
+        ringRef.current.style.top = ry + "px";
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    window.addEventListener("mousemove", onMove);
+    raf = requestAnimationFrame(loop);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  /* ── scroll progress ── */
+  useEffect(() => {
+    const onScroll = () => {
+      const d = document.documentElement;
+      setScrollPct((d.scrollTop / (d.scrollHeight - d.clientHeight)) * 100);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  /* ── fetch profile ── */
   useEffect(() => {
     async function fetchProfileData() {
       if (!username) return;
-
       try {
         setLoading(true);
-
-        // Fetch User Details - now includes posts for efficiency
-        const userResponse = await fetch(
+        const res = await fetch(
           `https://api.webnote.uz/api/users/${encodeURIComponent(username)}`,
           {
             headers: {
@@ -36,95 +77,243 @@ export default function UserProfile() {
             },
           },
         );
-
-        if (userResponse.ok) {
-          const userData: UserResponseDTO = await userResponse.json();
-          setUser(userData);
-          // PostResponseDTO now has authorId, and posts are directly part of user
-          setPosts(userData.posts || []);
+        if (res.ok) {
+          const data: UserResponseDTO = await res.json();
+          setUser(data);
+          setPosts(data.posts || []);
         } else {
           setUser(null);
           setPosts([]);
         }
-      } catch (error) {
-        console.error("Error fetching profile data:", error);
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
     }
-
     fetchProfileData();
   }, [username, token]);
 
+  /* ── loading state ── */
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col justify-center items-center gap-6">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-gray-50 rounded-full border-t-gray-900 animate-spin"></div>
+      <>
+        <style dangerouslySetInnerHTML={{ __html: BASE_STYLES }} />
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "#0a0a08",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "24px",
+          }}
+        >
+          {/* Animated dots */}
+          <div style={{ display: "flex", gap: "8px" }}>
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  background: "#c0392b",
+                  borderRadius: "50%",
+                  animation: `blink 1.2s ${i * 0.2}s infinite`,
+                }}
+              />
+            ))}
+          </div>
+          <p
+            style={{
+              fontFamily: "'DM Mono', monospace",
+              fontSize: "0.62rem",
+              letterSpacing: "0.25em",
+              textTransform: "uppercase",
+              color: "rgba(245,240,232,0.25)",
+            }}
+          >
+            Loading Profile
+          </p>
         </div>
-        <div className="text-sm font-bold uppercase tracking-widest text-gray-400 animate-pulse">
-          Loading Profile...
-        </div>
-      </div>
+      </>
     );
   }
 
+  /* ── not found state ── */
   if (!user) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center">
-          <div className="mb-8 inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-50 text-red-500">
-            <svg
-              className="w-12 h-12"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-4xl font-serif font-bold text-gray-900 mb-4 tracking-tight">
-            User not found
-          </h2>
-          <p className="text-gray-500 text-lg font-light mb-10 leading-relaxed">
-            The profile for{" "}
-            <span className="font-semibold text-gray-900">@{username}</span>{" "}
-            doesn&apos;t seem to exist or may have been removed.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center px-8 py-3 bg-gray-900 text-white rounded-full font-semibold hover:bg-gray-800 transition-all shadow-md group"
+      <>
+        <style dangerouslySetInnerHTML={{ __html: BASE_STYLES }} />
+        <div ref={cursorRef} className="cursor" />
+        <div ref={ringRef} className="cursor-ring" />
+
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "#0a0a08",
+            color: "#f5f0e8",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "40px",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          {/* Grid background */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage:
+                "linear-gradient(rgba(245,240,232,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(245,240,232,0.02) 1px, transparent 1px)",
+              backgroundSize: "60px 60px",
+              pointerEvents: "none",
+            }}
+          />
+
+          {/* Ghost 404 */}
+          <div
+            style={{
+              position: "absolute",
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 900,
+              fontSize: "clamp(14rem, 35vw, 30rem)",
+              lineHeight: 1,
+              color: "rgba(245,240,232,0.025)",
+              userSelect: "none",
+              letterSpacing: "-0.06em",
+              pointerEvents: "none",
+            }}
           >
-            <svg
-              className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            404
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 2,
+              textAlign: "center",
+              maxWidth: "500px",
+              animation: "fadeUp 0.8s cubic-bezier(.22,1,.36,1) both",
+            }}
+          >
+            <p className="section-label" style={{ marginBottom: "24px" }}>
+              Profile Not Found
+            </p>
+
+            <h1
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 900,
+                fontSize: "clamp(2.5rem, 8vw, 5rem)",
+                lineHeight: 0.95,
+                letterSpacing: "-0.03em",
+                color: "#f5f0e8",
+                marginBottom: "32px",
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Back to Home
-          </Link>
+              No one here
+              <br />
+              <em style={{ color: "#c0392b", fontStyle: "italic" }}>
+                by that name.
+              </em>
+            </h1>
+
+            <div
+              style={{
+                borderLeft: "3px solid #c0392b",
+                paddingLeft: "24px",
+                textAlign: "left",
+                marginBottom: "48px",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "0.78rem",
+                  lineHeight: 1.8,
+                  color: "rgba(245,240,232,0.4)",
+                }}
+              >
+                The profile for{" "}
+                <span
+                  style={{
+                    color: "#f5f0e8",
+                    borderBottom: "1px solid rgba(192,57,43,0.5)",
+                  }}
+                >
+                  @{username}
+                </span>{" "}
+                doesn&apos;t exist or may have been removed.
+              </p>
+            </div>
+
+            <Link
+              href="/"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "14px 32px",
+                background: "#c0392b",
+                color: "#f5f0e8",
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.75rem",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                transition: "transform 0.2s",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.transform = "translateY(-2px)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.transform = "translateY(0)")
+              }
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M19 12H5M12 5l-7 7 7 7" />
+              </svg>
+              Back to Home
+            </Link>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   const isDashboard = loggedInUsername === username;
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
-      <ProfileView user={user} posts={posts} isDashboard={isDashboard} />
-    </div>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: BASE_STYLES }} />
+      <div ref={cursorRef} className="cursor" />
+      <div ref={ringRef} className="cursor-ring" />
+      <div className="scanline" />
+      <div className="scroll-progress" style={{ width: `${scrollPct}%` }} />
+
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#0a0a08",
+          color: "#f5f0e8",
+          paddingTop: "40px",
+          paddingBottom: "80px",
+        }}
+      >
+        <ProfileView user={user} posts={posts} isDashboard={isDashboard} />
+      </div>
+    </>
   );
 }

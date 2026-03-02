@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
+import { BASE_STYLES } from "@/lib/theme";
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_TOTAL_SIZE_MB = 20;
@@ -15,18 +17,127 @@ interface Category {
   name: string;
 }
 
-function formatBytes(bytes: number, decimals = 2) {
-  if (bytes === 0) return "0 Bytes";
+function formatBytes(bytes: number) {
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const sizes = ["B", "KB", "MB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
+
+const EXTRA_STYLES = `
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .upload-zone {
+    border: 1px dashed rgba(245,240,232,0.15);
+    padding: 48px 32px;
+    text-align: center;
+    cursor: none;
+    transition: border-color 0.3s, background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-zone:hover {
+    border-color: rgba(192,57,43,0.5);
+    background: rgba(192,57,43,0.03);
+  }
+  .upload-zone.has-error {
+    border-color: rgba(192,57,43,0.6);
+    background: rgba(192,57,43,0.05);
+  }
+
+  .cat-toggle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border: 1px solid rgba(245,240,232,0.12);
+    background: transparent;
+    color: rgba(245,240,232,0.45);
+    cursor: none;
+    transition: all 0.2s;
+  }
+  .cat-toggle:hover {
+    border-color: rgba(245,240,232,0.3);
+    color: #f5f0e8;
+  }
+  .cat-toggle.selected {
+    border-color: #c0392b;
+    background: rgba(192,57,43,0.12);
+    color: #c0392b;
+  }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.7);
+    border: 1px solid rgba(245,240,232,0.15);
+    padding: 5px 12px;
+    background: rgba(245,240,232,0.03);
+    animation: slideUp 0.3s cubic-bezier(.22,1,.36,1) both;
+  }
+  .tag-chip button {
+    background: none;
+    border: none;
+    cursor: none;
+    color: rgba(245,240,232,0.35);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.2s;
+  }
+  .tag-chip button:hover { color: #c0392b; }
+
+  .file-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    border: 1px solid rgba(245,240,232,0.08);
+    background: rgba(245,240,232,0.02);
+    animation: slideUp 0.3s cubic-bezier(.22,1,.36,1) both;
+    transition: background 0.2s;
+  }
+  .file-row:hover { background: rgba(245,240,232,0.04); }
+
+  .form-section {
+    border: 1px solid rgba(245,240,232,0.08);
+    margin-bottom: 2px;
+    animation: fadeUp 0.6s cubic-bezier(.22,1,.36,1) both;
+  }
+  .section-header {
+    padding: 28px 40px;
+    border-bottom: 1px solid rgba(245,240,232,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-body { padding: 40px; }
+
+  @media (max-width: 640px) {
+    .section-header { padding: 20px 24px; }
+    .section-body { padding: 24px; }
+  }
+`;
 
 export default function CreatePostPage() {
   const { token, username } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+  const [scrollPct, setScrollPct] = useState(0);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -34,72 +145,102 @@ export default function CreatePostPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-
   const [tagInput, setTagInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
+  /* ── cursor ── */
   useEffect(() => {
-    if (!localStorage.getItem("jwt_token")) {
-      router.push("/login");
-    }
-  }, [router]);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("https://api.webnote.uz/api/categories");
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
+    let raf: number;
+    let rx = 0,
+      ry = 0;
+    const onMove = (e: MouseEvent) => {
+      if (cursorRef.current) {
+        cursorRef.current.style.left = e.clientX + "px";
+        cursorRef.current.style.top = e.clientY + "px";
       }
+      rx += (e.clientX - rx) * 0.12;
+      ry += (e.clientY - ry) * 0.12;
     };
-
-    fetchCategories();
+    const loop = () => {
+      if (ringRef.current) {
+        ringRef.current.style.left = rx + "px";
+        ringRef.current.style.top = ry + "px";
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    window.addEventListener("mousemove", onMove);
+    raf = requestAnimationFrame(loop);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* ── scroll progress ── */
+  useEffect(() => {
+    const onScroll = () => {
+      const d = document.documentElement;
+      setScrollPct((d.scrollTop / (d.scrollHeight - d.clientHeight)) * 100);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  /* ── auth guard ── */
+  useEffect(() => {
+    if (!localStorage.getItem("jwt_token")) router.push("/login");
+  }, [router]);
+
+  /* ── fetch categories ── */
+  useEffect(() => {
+    fetch("https://api.webnote.uz/api/categories")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
+
+  const processFiles = (newFiles: File[]) => {
     setFileError(null);
-    if (!e.target.files) return;
-
-    const newFiles = Array.from(e.target.files);
-    const oversizedFiles: string[] = [];
-    const validFiles: File[] = [];
-
-    let currentTotalSize = images.reduce((sum, file) => sum + file.size, 0);
+    const oversized: string[] = [];
+    const valid: File[] = [];
+    let total = images.reduce((s, f) => s + f.size, 0);
 
     for (const file of newFiles) {
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        oversizedFiles.push(file.name);
+        oversized.push(file.name);
         continue;
       }
-
-      if (currentTotalSize + file.size > MAX_TOTAL_SIZE_BYTES) {
-        setFileError(
-          `Cannot add more files. Total upload size would exceed ${MAX_TOTAL_SIZE_MB}MB.`,
-        );
+      if (total + file.size > MAX_TOTAL_SIZE_BYTES) {
+        setFileError(`Total upload size would exceed ${MAX_TOTAL_SIZE_MB}MB.`);
         break;
       }
-
-      validFiles.push(file);
-      currentTotalSize += file.size;
+      valid.push(file);
+      total += file.size;
     }
-
-    if (oversizedFiles.length > 0) {
+    if (oversized.length > 0)
       setFileError(
-        `The following files exceed the ${MAX_FILE_SIZE_MB}MB limit: ${oversizedFiles.join(", ")}`,
+        `File(s) exceed the ${MAX_FILE_SIZE_MB}MB limit: ${oversized.join(", ")}`,
       );
-    }
+    setImages((prev) => [...prev, ...valid]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
-    setImages((prev) => [...prev, ...validFiles]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    processFiles(Array.from(e.target.files));
+  };
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    processFiles(
+      Array.from(e.dataTransfer.files).filter((f) =>
+        f.type.startsWith("image/"),
+      ),
+    );
   };
 
   const removeFile = (index: number) => {
@@ -110,264 +251,803 @@ export default function CreatePostPage() {
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
       e.preventDefault();
-      if (!tags.includes(tagInput.trim())) {
-        setTags([...tags, tagInput.trim()]);
-      }
+      const val = tagInput
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "");
+      if (val && !tags.includes(val)) setTags([...tags, val]);
       setTagInput("");
     } else if (e.key === "Backspace" && !tagInput && tags.length > 0) {
       setTags(tags.slice(0, -1));
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
-
   const toggleCategory = (id: number) => {
     setSelectedCategoryIds((prev) =>
-      prev.includes(id) ? prev.filter((catId) => catId !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
     );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username) {
-      alert("You must be logged in to create a post.");
-      return;
-    }
-
+    if (!username) return;
     setIsLoading(true);
 
-    const formData = new FormData();
-    images.forEach((image) => {
-      formData.append("images", image);
-    });
-
-    const postData = {
-      title,
-      content: description,
-      authorUsername: username, // Using username directly from auth context
-      categoryIds: selectedCategoryIds,
-      tags: tags,
-    };
-
-    formData.append(
+    const fd = new FormData();
+    images.forEach((img) => fd.append("images", img));
+    fd.append(
       "data",
-      new Blob([JSON.stringify(postData)], { type: "application/json" }),
+      new Blob(
+        [
+          JSON.stringify({
+            title,
+            content: description,
+            authorUsername: username,
+            categoryIds: selectedCategoryIds,
+            tags,
+          }),
+        ],
+        { type: "application/json" },
+      ),
     );
 
     try {
-      const response = await fetch("https://api.webnote.uz/api/posts", {
+      const res = await fetch("https://api.webnote.uz/api/posts", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
       });
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(errorBody || "Failed to create post.");
-      }
-
-      alert("Post Created Successfully!");
+      if (!res.ok)
+        throw new Error((await res.text()) || "Failed to create post.");
       router.push("/");
-    } catch (error) {
-      console.error(error);
-      alert(error instanceof Error ? error.message : "An error occurred.");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "An error occurred.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const inputStyle = (field: string): React.CSSProperties => ({
+    width: "100%",
+    padding: "14px 16px",
+    background:
+      focusedField === field
+        ? "rgba(245,240,232,0.06)"
+        : "rgba(245,240,232,0.03)",
+    border: `1px solid ${focusedField === field ? "#c0392b" : "rgba(245,240,232,0.1)"}`,
+    color: "#f5f0e8",
+    fontFamily: "'DM Mono', monospace",
+    fontSize: "0.8rem",
+    letterSpacing: "0.03em",
+    outline: "none",
+    transition: "border-color 0.2s, background 0.2s",
+  });
+
+  const wordCount = description.trim().split(/\s+/).filter(Boolean).length;
+  const readTime = Math.max(1, Math.ceil(wordCount / 200));
+
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-        <div className="p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create New Post ✍️
-          </h1>
-          <p className="text-gray-500 mb-8">
-            Share your thoughts with the world.
-          </p>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: BASE_STYLES }} />
+      <style dangerouslySetInnerHTML={{ __html: EXTRA_STYLES }} />
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter an engaging title..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
-                required
-              />
-            </div>
+      <div ref={cursorRef} className="cursor" />
+      <div ref={ringRef} className="cursor-ring" />
+      <div className="scanline" />
+      <div className="scroll-progress" style={{ width: `${scrollPct}%` }} />
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Categories <span className="text-red-500">*</span>
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => toggleCategory(cat.id)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-                      selectedCategoryIds.includes(cat.id)
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-              {selectedCategoryIds.length === 0 && (
-                <p className="text-xs text-amber-600 mt-1">
-                  Please select at least one category.
-                </p>
-              )}
-            </div>
+      <div
+        style={{ minHeight: "100vh", background: "#0a0a08", color: "#f5f0e8" }}
+      >
+        {/* ── Navbar ── */}
+        <nav className="inner-nav">
+          <Link
+            href="/"
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 900,
+              fontSize: "1.2rem",
+              color: "#f5f0e8",
+              textDecoration: "none",
+              letterSpacing: "-0.02em",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
+            <span
+              style={{
+                width: "26px",
+                height: "26px",
+                background: "#c0392b",
+                color: "#f5f0e8",
+                fontFamily: "'DM Mono', monospace",
+                fontSize: "0.6rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                letterSpacing: "0.05em",
+              }}
+            >
+              WN
+            </span>
+            WebNotes
+          </Link>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Tags
-              </label>
-              <div className="flex flex-wrap items-center gap-2 p-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 bg-white">
-                {tags.map((tag, index) => (
+          <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
+            <Link href="/" className="nav-link">
+              Home
+            </Link>
+            {username && (
+              <Link href={`/${username}`} className="nav-link">
+                My Profile
+              </Link>
+            )}
+          </div>
+        </nav>
+
+        {/* ── Content ── */}
+        <div
+          style={{
+            maxWidth: "860px",
+            margin: "0 auto",
+            padding: "60px 40px 120px",
+          }}
+        >
+          {/* Page header */}
+          <div
+            style={{
+              marginBottom: "56px",
+              animation: "fadeUp 0.7s cubic-bezier(.22,1,.36,1) both",
+            }}
+          >
+            <p className="section-label" style={{ marginBottom: "12px" }}>
+              New Entry
+            </p>
+            <h1
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 900,
+                fontSize: "clamp(2.5rem, 7vw, 5rem)",
+                lineHeight: 0.95,
+                letterSpacing: "-0.03em",
+                color: "#f5f0e8",
+              }}
+            >
+              Write a{" "}
+              <em style={{ color: "#c0392b", fontStyle: "italic" }}>Story</em>
+            </h1>
+            {(title || wordCount > 0) && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: "24px",
+                  marginTop: "20px",
+                  animation: "fadeUp 0.4s cubic-bezier(.22,1,.36,1) both",
+                }}
+              >
+                {title && (
                   <span
-                    key={index}
-                    className="flex items-center bg-gray-100 text-gray-800 text-sm px-2 py-1 rounded-md"
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: "0.65rem",
+                      color: "rgba(245,240,232,0.3)",
+                      letterSpacing: "0.1em",
+                    }}
                   >
-                    #{tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="ml-1 text-gray-500 hover:text-red-500 font-bold focus:outline-none"
-                    >
-                      &times;
-                    </button>
+                    &ldquo;{title.slice(0, 48)}
+                    {title.length > 48 ? "…" : ""}&rdquo;
                   </span>
-                ))}
+                )}
+                {wordCount > 0 && (
+                  <span
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: "0.65rem",
+                      color: "rgba(245,240,232,0.25)",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    {wordCount} words · {readTime} min read
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            {/* ══ SECTION 1: Title ══ */}
+            <div className="form-section" style={{ animationDelay: "0.05s" }}>
+              <div className="section-header">
+                <div>
+                  <p className="section-label" style={{ marginBottom: "4px" }}>
+                    01
+                  </p>
+                  <h2
+                    style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontWeight: 800,
+                      fontSize: "1rem",
+                      color: "#f5f0e8",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    Title
+                  </h2>
+                </div>
+                <span
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: "0.6rem",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    color: "rgba(245,240,232,0.2)",
+                  }}
+                >
+                  Required
+                </span>
+              </div>
+              <div className="section-body">
                 <input
                   type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleTagKeyDown}
-                  placeholder={
-                    tags.length === 0 ? "Type tag and press Enter..." : ""
-                  }
-                  className="flex-1 p-1 outline-none text-sm min-w-30"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onFocus={() => setFocusedField("title")}
+                  onBlur={() => setFocusedField(null)}
+                  style={{
+                    ...inputStyle("title"),
+                    fontSize: "1rem",
+                    fontFamily: "'Playfair Display', serif",
+                    fontWeight: 700,
+                    letterSpacing: "-0.01em",
+                    padding: "18px 20px",
+                  }}
+                  placeholder="An engaging headline…"
+                  required
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Content <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Write something amazing..."
-                className="w-full p-3 border border-gray-300 rounded-lg h-48 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Images
-              </label>
-              <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${
-                  fileError
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300 hover:bg-gray-50"
-                }`}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  ref={fileInputRef}
-                />
-                <div className="text-gray-500">
-                  <span className="font-semibold text-blue-600">
-                    Click to upload
-                  </span>{" "}
-                  or drag and drop
+            {/* ══ SECTION 2: Categories ══ */}
+            <div className="form-section" style={{ animationDelay: "0.1s" }}>
+              <div className="section-header">
+                <div>
+                  <p className="section-label" style={{ marginBottom: "4px" }}>
+                    02
+                  </p>
+                  <h2
+                    style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontWeight: 800,
+                      fontSize: "1rem",
+                      color: "#f5f0e8",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    Categories
+                  </h2>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  Max file size: {MAX_FILE_SIZE_MB}MB. Total limit:{" "}
-                  {MAX_TOTAL_SIZE_MB}MB.
-                </p>
+                <span
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: "0.6rem",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    color:
+                      selectedCategoryIds.length > 0
+                        ? "#c0392b"
+                        : "rgba(245,240,232,0.2)",
+                  }}
+                >
+                  {selectedCategoryIds.length > 0
+                    ? `${selectedCategoryIds.length} selected`
+                    : "Pick at least one"}
+                </span>
               </div>
-
-              {fileError && (
-                <div className="mt-2 text-sm text-red-600 bg-red-100 p-3 rounded-lg">
-                  {fileError}
-                </div>
-              )}
-
-              {images.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  {images.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border"
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <Image
-                          src={URL.createObjectURL(file)}
-                          alt="preview"
-                          className="w-10 h-10 object-cover rounded-md flex-shrink-0"
-                        />
-                        <div className="text-xs">
-                          <p className="font-medium text-gray-800 truncate">
-                            {file.name}
-                          </p>
-                          <p className="text-gray-500">
-                            {formatBytes(file.size)}
-                          </p>
-                        </div>
-                      </div>
+              <div className="section-body">
+                {categories.length > 0 ? (
+                  <div
+                    style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}
+                  >
+                    {categories.map((cat) => (
                       <button
+                        key={cat.id}
                         type="button"
-                        onClick={() => removeFile(index)}
-                        className="flex-shrink-0 text-red-500 hover:text-red-700 font-bold text-lg p-1"
+                        onClick={() => toggleCategory(cat.id)}
+                        className={`cat-toggle${selectedCategoryIds.includes(cat.id) ? " selected" : ""}`}
                       >
-                        &times;
+                        {cat.name}
                       </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <p
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: "0.72rem",
+                      color: "rgba(245,240,232,0.25)",
+                      letterSpacing: "0.05em",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    Loading categories…
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="pt-4">
+            {/* ══ SECTION 3: Tags ══ */}
+            <div className="form-section" style={{ animationDelay: "0.15s" }}>
+              <div className="section-header">
+                <div>
+                  <p className="section-label" style={{ marginBottom: "4px" }}>
+                    03
+                  </p>
+                  <h2
+                    style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontWeight: 800,
+                      fontSize: "1rem",
+                      color: "#f5f0e8",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    Tags
+                  </h2>
+                </div>
+                <span
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: "0.6rem",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    color: "rgba(245,240,232,0.2)",
+                  }}
+                >
+                  Optional
+                </span>
+              </div>
+              <div className="section-body">
+                {/* Existing tags */}
+                {tags.length > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                      marginBottom: "20px",
+                    }}
+                  >
+                    {tags.map((tag) => (
+                      <span key={tag} className="tag-chip">
+                        #{tag}
+                        <button
+                          type="button"
+                          onClick={() => setTags(tags.filter((t) => t !== tag))}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tag input */}
+                <div style={{ position: "relative" }}>
+                  <input
+                    ref={tagInputRef}
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagKeyDown}
+                    onFocus={() => setFocusedField("tags")}
+                    onBlur={() => setFocusedField(null)}
+                    style={inputStyle("tags")}
+                    placeholder={
+                      tags.length === 0
+                        ? "Type a tag and press Enter or comma…"
+                        : "Add another tag…"
+                    }
+                  />
+                  {tagInput && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: "16px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: "0.6rem",
+                        color: "rgba(245,240,232,0.25)",
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      Enter ↵
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ══ SECTION 4: Content ══ */}
+            <div className="form-section" style={{ animationDelay: "0.2s" }}>
+              <div className="section-header">
+                <div>
+                  <p className="section-label" style={{ marginBottom: "4px" }}>
+                    04
+                  </p>
+                  <h2
+                    style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontWeight: 800,
+                      fontSize: "1rem",
+                      color: "#f5f0e8",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    Content
+                  </h2>
+                </div>
+                {wordCount > 0 && (
+                  <span
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: "0.6rem",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "rgba(245,240,232,0.3)",
+                    }}
+                  >
+                    {wordCount} words
+                  </span>
+                )}
+              </div>
+              <div className="section-body">
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  onFocus={() => setFocusedField("content")}
+                  onBlur={() => setFocusedField(null)}
+                  style={{
+                    ...inputStyle("content"),
+                    minHeight: "320px",
+                    resize: "vertical",
+                    lineHeight: 1.9,
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: "0.95rem",
+                    letterSpacing: "0",
+                  }}
+                  placeholder="Write something worth reading…"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* ══ SECTION 5: Images ══ */}
+            <div className="form-section" style={{ animationDelay: "0.25s" }}>
+              <div className="section-header">
+                <div>
+                  <p className="section-label" style={{ marginBottom: "4px" }}>
+                    05
+                  </p>
+                  <h2
+                    style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontWeight: 800,
+                      fontSize: "1rem",
+                      color: "#f5f0e8",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    Images
+                  </h2>
+                </div>
+                <span
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: "0.6rem",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    color:
+                      images.length > 0 ? "#c0392b" : "rgba(245,240,232,0.2)",
+                  }}
+                >
+                  {images.length > 0
+                    ? `${images.length} file${images.length !== 1 ? "s" : ""} selected`
+                    : "Optional"}
+                </span>
+              </div>
+              <div className="section-body">
+                {/* Drop zone */}
+                <div
+                  className={`upload-zone${fileError ? " has-error" : ""}`}
+                  style={
+                    isDragging
+                      ? {
+                          borderColor: "#c0392b",
+                          background: "rgba(192,57,43,0.06)",
+                        }
+                      : {}
+                  }
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleDrop}
+                >
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                  />
+
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={isDragging ? "#c0392b" : "rgba(245,240,232,0.2)"}
+                    strokeWidth="1.5"
+                    style={{
+                      margin: "0 auto 16px",
+                      display: "block",
+                      transition: "stroke 0.2s",
+                    }}
+                  >
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                  </svg>
+
+                  <p
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: "0.75rem",
+                      color: isDragging ? "#c0392b" : "rgba(245,240,232,0.35)",
+                      letterSpacing: "0.08em",
+                      marginBottom: "8px",
+                      transition: "color 0.2s",
+                    }}
+                  >
+                    {isDragging
+                      ? "Drop to upload"
+                      : "Click or drag images here"}
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: "0.6rem",
+                      color: "rgba(245,240,232,0.2)",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Max {MAX_FILE_SIZE_MB}MB per file · {MAX_TOTAL_SIZE_MB}MB
+                    total
+                  </p>
+                </div>
+
+                {/* Error */}
+                {fileError && (
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      padding: "12px 16px",
+                      border: "1px solid rgba(192,57,43,0.4)",
+                      background: "rgba(192,57,43,0.06)",
+                      animation: "fadeUp 0.3s cubic-bezier(.22,1,.36,1) both",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: "0.7rem",
+                        color: "#c0392b",
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      {fileError}
+                    </p>
+                  </div>
+                )}
+
+                {/* File list */}
+                {images.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: "20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                    }}
+                  >
+                    {images.map((file, index) => {
+                      const objectUrl = URL.createObjectURL(file);
+                      return (
+                        <div key={index} className="file-row">
+                          <div
+                            style={{
+                              width: "48px",
+                              height: "48px",
+                              flexShrink: 0,
+                              overflow: "hidden",
+                              border: "1px solid rgba(245,240,232,0.08)",
+                              position: "relative",
+                            }}
+                          >
+                            <Image
+                              src={objectUrl}
+                              alt="preview"
+                              fill
+                              style={{
+                                objectFit: "cover",
+                                filter: "grayscale(20%)",
+                              }}
+                            />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p
+                              style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: "0.72rem",
+                                color: "#f5f0e8",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {file.name}
+                            </p>
+                            <p
+                              style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: "0.6rem",
+                                color: "rgba(245,240,232,0.3)",
+                                letterSpacing: "0.08em",
+                              }}
+                            >
+                              {formatBytes(file.size)}
+                            </p>
+                          </div>
+                          {index === 0 && (
+                            <span
+                              style={{
+                                fontFamily: "'DM Mono', monospace",
+                                fontSize: "0.55rem",
+                                letterSpacing: "0.2em",
+                                textTransform: "uppercase",
+                                color: "#c0392b",
+                                border: "1px solid rgba(192,57,43,0.35)",
+                                padding: "3px 8px",
+                                flexShrink: 0,
+                              }}
+                            >
+                              Cover
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "none",
+                              padding: "8px",
+                              color: "rgba(245,240,232,0.2)",
+                              transition: "color 0.2s",
+                              flexShrink: 0,
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.color = "#c0392b")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.color =
+                                "rgba(245,240,232,0.2)")
+                            }
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                            >
+                              <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ══ SUBMIT ══ */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingTop: "40px",
+                flexWrap: "wrap",
+                gap: "20px",
+                animation: "fadeUp 0.7s 0.3s cubic-bezier(.22,1,.36,1) both",
+              }}
+            >
+              <Link
+                href="/"
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "rgba(245,240,232,0.3)",
+                  textDecoration: "none",
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.color = "rgba(245,240,232,0.7)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = "rgba(245,240,232,0.3)")
+                }
+              >
+                ← Discard
+              </Link>
+
               <button
                 type="submit"
                 disabled={isLoading || !!fileError}
-                className={`w-full py-3 px-6 rounded-lg text-white font-semibold text-lg transition-all shadow-md ${
-                  isLoading || !!fileError
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gray-900 hover:bg-gray-800 hover:shadow-lg"
-                }`}
+                className="btn-primary"
+                style={{
+                  padding: "16px 56px",
+                  opacity: isLoading || !!fileError ? 0.5 : 1,
+                  cursor: isLoading ? "not-allowed" : "none",
+                }}
               >
-                {isLoading ? "Publishing..." : "Publish Post"}
+                {isLoading ? (
+                  <>
+                    <span
+                      style={{
+                        width: "14px",
+                        height: "14px",
+                        border: "2px solid rgba(245,240,232,0.3)",
+                        borderTopColor: "#f5f0e8",
+                        borderRadius: "50%",
+                        animation: "spin 0.8s linear infinite",
+                        display: "inline-block",
+                      }}
+                    />
+                    <span>Publishing…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Publish Story</span>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </>
+                )}
               </button>
             </div>
           </form>
         </div>
       </div>
-    </div>
+    </>
   );
 }
