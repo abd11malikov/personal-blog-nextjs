@@ -30,7 +30,7 @@ export default function RegisterPage() {
   ) => {
     let value = e.target.value;
     if (e.target.name === "username") {
-      value = value.toLowerCase();
+      value = value.toLowerCase().replace(/[^a-z0-9_]/g, "");
     }
     setFormData((prev) => ({
       ...prev,
